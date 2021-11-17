@@ -21,7 +21,8 @@ class FixerCurrencyService implements CurrencyContract
         $access_key = config("currency.fixer.api_key");
         $base_url = config("currency.fixer.base_url");
         // Initialize CURL:
-        $ch = curl_init($base_url . $endpoint . '?access_key=' . $access_key . '');
+        // $base = array_key_exists('from', $params) ? $params['from'] : 'USD';
+        $ch = curl_init($base_url . $endpoint . '?access_key=' . $access_key . '&base=EUR');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         // Store the data:
         $json = curl_exec($ch);
@@ -35,7 +36,8 @@ class FixerCurrencyService implements CurrencyContract
      */
     public function convert(string $from, string $to, float $sum): float
     {
-        return $sum;
+        $response = $this->callApi('latest')['rates'][$to];
+        return $sum * $response;
     }
 
     /**
@@ -44,10 +46,10 @@ class FixerCurrencyService implements CurrencyContract
     public function list(): array
     {
         $res = Cache::get("fixer_symbols");
-        if (!$res){
+        if (!$res) {
             $data = $this->callApi('symbols');
             $res =  $data['symbols'];
-            Cache::set("fixer_symbols", $res , $this->cacheTime);
+            Cache::set("fixer_symbols", $res, $this->cacheTime);
         }
 
         return $res;
